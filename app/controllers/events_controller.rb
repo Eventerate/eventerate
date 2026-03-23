@@ -32,23 +32,24 @@ class EventsController < ApplicationController
 
   def create
     @event = Event.new(event_params)
-    # @event.age_range = params[:event][:age_range]
-    # @event.num_activities = params[:event][:num_activities]
     @event.user = current_user
-    @event.organization = Organization.find(current_user.organization_users.first.organization_id)
+    if current_user.organization_users.first
+      @event.organization = Organization.find(current_user.organization_users.first.organization_id)
+    end
     authorize @event
-    # raise
+
     if @event.save
       Collaborator.create(event: @event, user: current_user)
-      # Initializes a chat with the creator of the event to start off with
       ChatService.create_event_chat(@event, current_user)
-      # @event.generate_activities
-      # redirect_to @event, notice: 'Event was successfully created.'
+
+      # Store session data
       session[:age_range] = params[:event][:age_range]
       session[:num_activities] = params[:event][:num_activities]
 
-      @event.generate_activities_from_ai(session[:age_range], session[:num_activities])
-      redirect_to preview_event_plan_event_path(@event)
+      # Queue activity generation as a background job
+      GenerateActivitiesJob.perform_now(@event.id, session[:age_range], session[:num_activities])
+
+      redirect_to preview_event_plan_event_path(@event), notice: 'Event created! Activities are being generated...'
     else
       Rails.logger.info @event.errors.full_messages
       render :new, status: :unprocessable_entity
@@ -70,11 +71,22 @@ class EventsController < ApplicationController
     @task = @event.tasks.new
     @org_users = current_user.organizations.first.users
 
-    @generated_activities = @event.generate_activities_from_ai(age_range, num_activities)["activity"]
-    @tasks = @task.content(@generated_activities)
-    Rails.logger.info "Task: #{@task.inspect}"
-    Rails.logger.info "Generated Activities: #{@generated_activities.inspect}"
-    Rails.logger.info " @suggestions #{@suggestions.inspect}"
+      # Check if activities already exist (from background job)
+      if @event.activities.any?
+        @generated_activities = @event.activities.map { |a| {
+          title: a.title,
+          description: a.description,
+          age: a.age,
+          instructions: a.instructions,
+          materials: a.materials,
+          duration: a.duration
+        } }
+      else
+        @generated_activities = []
+      end
+
+  # Don't call API here - just use empty tasks for now
+  @tasks = []
   end
 
   def save_event_plan

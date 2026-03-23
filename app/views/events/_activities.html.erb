@@ -21,10 +21,14 @@
     <!-- Collapsible details -->
     <div class="collapse mt-3" id="details-<%= index %>">
       <p><strong>Step-by-Step Instructions:</strong></p>
+      <% if activity["instructions"].present? %>
         <% activity["instructions"].each_with_index do |i, i_index| %>
           <p><%= i_index + 1 %>. <%= i %></p>
         <% end %>
-      <p><strong>Materials:</strong> <%= activity["materials"].join(", ") %></p>
+      <% end %>
+      <% if activity["materials"].present? %>
+        <p><strong>Materials:</strong> <%= activity["materials"].join(", ") %></p>
+      <% end %>
     </div>
 
     <!-- Hidden fields to preserve activity details -->

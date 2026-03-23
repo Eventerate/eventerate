@@ -131,7 +131,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <%= render 'events/create_event', event: @event, url: preview_event_path, method: :get %>  <!-- Include your form partial here -->
+          <%= render 'events/create_event', event: @event, url: events_path, method: :post %> <!-- Include your form partial here -->
         </div>
       </div>
     </div>
