@@ -40,9 +40,7 @@
             <%# Description Step-by-Step Instructions %>
             <h5>Step-by-Step Instructions:</h5>
             <ul class="list-unstyled">
-              <% JSON.parse(activity.instructions).each_with_index do |step, index| %>
-                <li><%= index + 1 %>. <%= step %></li>
-              <% end %>
+              <% instructions = activity.instructions.is_a?(Array) ? activity.instructions : JSON.parse(activity.instructions) %>
             </ul>
 
             <%# Description Edit %>
@@ -66,7 +64,8 @@
           <h5>Materials:</h5>
           <div class="modal-cards">
             <ul>
-              <% JSON.parse(activity.materials).each do |material| %>
+              <% materials = activity.materials.is_a?(Array) ? activity.materials : JSON.parse(activity.materials) %>
+              <% materials.each do |material| %>
                 <li><%= material %></li>
               <% end %>
             </ul>

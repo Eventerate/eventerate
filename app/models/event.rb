@@ -1,6 +1,6 @@
 class Event < ApplicationRecord
   belongs_to :user
-  belongs_to :organization
+  belongs_to :organization, optional: true
 
   validates :title, presence: true
   validates :date, presence: true
@@ -194,5 +194,24 @@ class Event < ApplicationRecord
     #     genres: [genre] # Convert to an array
     #   )
     # end
+  end
+
+  def assign_predefined_activities(age_range, num_activities)
+    activities_list = ::PREDEFINED_ACTIVITIES[age_range] || ::PREDEFINED_ACTIVITIES['Elementary']
+    selected = activities_list.sample([num_activities.to_i, activities_list.size].min)
+
+    selected.each do |activity_data|
+      Activity.create!(
+        event: self,
+        title: activity_data[:title],
+        description: activity_data[:description],
+        instructions: activity_data[:instructions],
+        materials: activity_data[:materials],
+        age: activity_data[:age],
+        duration: activity_data[:duration]
+      )
+    end
+
+    Rails.logger.info("Created #{selected.count} predefined activities for event #{id}")
   end
 end
